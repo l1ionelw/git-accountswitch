@@ -6,6 +6,8 @@ import path from 'path'
 import { readFileSync } from 'fs'
 import { homedir } from 'os'
 import SSHConfig from 'ssh-config'
+import { execSync } from 'child_process'
+import { appendFileSync } from 'fs'
 
 function createWindow() {
   // Create the browser window.
@@ -88,3 +90,65 @@ ipcMain.handle('read-ssh-config', async () => {
     return `Error reading file: ${error.message}`
   }
 })
+ipcMain.handle('create-new-sshtoken', (event, profileName, accountEmail) => {
+  console.log(profileName);
+  console.log(accountEmail);
+  let commandOutputs = [];
+  // generate file
+  let command = `ssh-keygen -t rsa -b 4096 -C "${accountEmail}" -f ${path.join(homedir(), '.ssh', `${profileName}`)} -N ""`;
+  commandOutputs.push(runCommand(command));
+  // add to ssh
+  const addCommand = `ssh-add ${path.join(homedir(), '.ssh', `${profileName}`)}`;
+  commandOutputs.push(runCommand(addCommand));
+  // append to config 
+  let writeStatus, writeMessage = "", sshConfigPath, sshConfigEntry;
+  try {
+    sshConfigEntry = `
+Host ${profileName}
+    HostName github.com
+    User git
+    IdentityFile ~/.ssh/${profileName}
+`;
+    sshConfigPath = path.join(homedir(), '.ssh', 'config');
+    appendFileSync(sshConfigPath, sshConfigEntry, 'utf8');
+    console.log(`SSH config entry added for ${profileName}`);
+    writeStatus = "success";
+  } catch (e) {
+    console.log(e.message);
+    writeStatus = "error";
+    writeMessage = e.message;
+  }
+  commandOutputs.push({ status: writeStatus, output: writeMessage, command: `appendFileSync(${sshConfigPath}, ${sshConfigEntry}, 'utf-8')` });
+  // get the ssh pub file
+  const pubFilePath = path.join(homedir(), '.ssh', `${profileName}.pub`);
+  let pubFileContent, readStatus;
+  try {
+    pubFileContent = readFileSync(pubFilePath, 'utf-8');
+    readStatus = "success";
+  } catch (error) {
+    console.error("Error reading public key file:", error.message);
+    pubFileContent = `Error reading file: ${error.message}`;
+    readStatus = "error";
+  }
+  commandOutputs.push({ step: "readSSHKey", status: readStatus, output: pubFileContent, command: `readFileSync(${pubFilePath}, 'utf-8')` });
+  return commandOutputs;
+});
+
+function runCommand(commandString) {
+  let runStatus = { status: null, output: null, command: commandString }
+  console.log("----------");
+  console.log("[IPC] running command: " + commandString);
+  try {
+    const output = execSync(commandString, { stdio: 'pipe' }).toString();
+    runStatus.status = "success";
+    runStatus.output = output;
+    console.log("[IPC] command output: " + output);
+    console.log("----------");
+  } catch (error) {
+    runStatus.status = "success";
+    runStatus.output = output;
+    console.error("[IPC] command error: " + error.message);
+    console.log("----------");
+  }
+  return runStatus;
+}

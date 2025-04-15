@@ -1,10 +1,11 @@
 import { useState } from "react";
 
-export default function ImportOrNewAccountSelector() {
+export default function Selector() {
     const [activeView, setActiveView] = useState("left");
     const [showLoginWhyMessage, setShowLoginWhyMessage] = useState(false);
     function createSSHToken() {
         console.log("Create SSH Token clicked");
+        window.location.href = "/addaccountssh";
     }
 
     return (

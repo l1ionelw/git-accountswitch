@@ -1,6 +1,8 @@
+import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import { useEffect, useState } from "react";
-import NoAccountsAvaliable from "./components/NoAccountsAvaliable";
-
+import Homepage from "./components/onboarding/Homepage";
+import GenerateSSHToken from "./components/generate_ssh_token/GenerateSSHToken";
+export const APP_SSH_PREFIX = "accswitch_";
 export default function App() {
   const [config, setConfig] = useState([]);
   useEffect(() => {
@@ -14,15 +16,18 @@ export default function App() {
 
 
   return (
-    <div>
-      {config.length === 0 && <NoAccountsAvaliable />}
-    </div>
+    <Router>
+      <Routes>
+        <Route path="/addaccountssh" element={<GenerateSSHToken />} />
+        <Route path="/" element={<Homepage />} />
+      </Routes>
+    </Router>
   )
 }
 function getAppOwnedConfigs(config) {
   var myConfigs = [];
   for (let x of config) {
-    if (x.value.startsWith("accswitch_")) {
+    if (x.value.startsWith(APP_SSH_PREFIX)) {
       myConfigs.push(x)
     }
   }

@@ -20,5 +20,6 @@ if (process.contextIsolated) {
 }
 
 contextBridge.exposeInMainWorld('electronAPI', {
-  readSSHConfig: () => ipcRenderer.invoke('read-ssh-config')
+  readSSHConfig: () => ipcRenderer.invoke('read-ssh-config'),
+  createNewSSHToken: (profileName, accountEmail) => ipcRenderer.invoke('create-new-sshtoken', profileName, accountEmail)
 })

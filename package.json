@@ -20,6 +20,7 @@
   "dependencies": {
     "@electron-toolkit/preload": "^3.0.1",
     "@electron-toolkit/utils": "^4.0.0",
+    "react-router-dom": "^7.5.0",
     "ssh-config": "^5.0.3"
   },
   "devDependencies": {

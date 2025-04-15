@@ -1,7 +1,7 @@
 import { useState } from "react";
-import ImportOrNewAccountSelector from "./ImportOrNewAccountSelector";
+import Selector from "./Selector";
 
-export default function NoAccountsAvaliable() {
+export default function Homepage() {
     console.log("no accounts found");
     const [addOption, setAddOption] = useState("none"); // none, new-account, import-account
     return (
@@ -10,7 +10,7 @@ export default function NoAccountsAvaliable() {
             {addOption === "none" && <button style={styles.button} onClick={() => setAddOption("new-account")}>Add Account</button>}
             {addOption !== "none" && <div>
                 <h1>Add an account</h1>
-                <ImportOrNewAccountSelector />
+                <Selector />
             </div>}
         </div>
     );
