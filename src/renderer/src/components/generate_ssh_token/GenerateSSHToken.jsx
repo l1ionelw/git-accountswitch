@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { APP_SSH_PREFIX } from "../../App";
+import { APP_SSH_PREFIX } from "../../ConfigContext";
 
 export default function GenerateSSHToken() {
     const [profileName, setProfileName] = useState("");
@@ -43,11 +43,6 @@ export default function GenerateSSHToken() {
                         required
                     />
                 </div>
-                {profileNameInvalid && (
-                    <div style={styles.errorMessage}>
-                        <p>Profile name cannot have spaces or dashes; use underscores ( _ ) instead.</p>
-                    </div>
-                )}
                 <div style={styles.inputGroup}>
                     <label style={styles.label} htmlFor="accountEmail">Account Email:</label>
                     <input
@@ -61,19 +56,33 @@ export default function GenerateSSHToken() {
                     />
                 </div>
                 <button style={buttonEnabled ? styles.button : styles.buttonDisabled} type="submit" disabled={!buttonEnabled}>Create SSH Token</button>
-                {commandsResult.length > 0 && <div>
-                    <h1>PROGRESS</h1>
-                    {commandsResult.map((result, index) => (
-                        <div key={index} style={styles.resultContainer}>
-                            <h2 style={styles.resultHeading}>{result.status}</h2>
-                            <pre style={styles.codeBox}>{result.command}</pre>
-                            <h3 style={styles.outputHeading}>Output</h3>
-                            <pre style={styles.codeBox}>{result.output}</pre>
-                        </div>
-                    ))}
-                </div>}
             </form>
+            {profileNameInvalid && (
+                <div style={styles.errorMessage}>
+                    <p>Profile name cannot have spaces or dashes; use underscores ( _ ) instead.</p>
+                </div>
+            )}
+            {commandsResult.length > 0 && (
+                <div style={styles.successMessage}>
+                    <h2>Your SSH token has been generated, please go to the <a href="https://github.com/settings/keys" target="_blank" rel="noopener noreferrer">GitHub developer settings</a> to add this SSH key</h2>
+                    <h3>Command Output:</h3>
+                    <pre style={styles.codeBox}>{commandsResult[commandsResult.length - 1].output}</pre>
+                    <button style={styles.button} onClick={() => window.location.href = '/'}>Next</button>
+                </div>
 
+            )}
+            {commandsResult.length > 0 && <div>
+                <h1>PROGRESS</h1>
+                {commandsResult.map((result, index) => (
+                    <div key={index} style={styles.resultContainer}>
+                        <h2 style={styles.resultHeading}>{result.status}</h2>
+                        <pre style={styles.codeBox}>{result.command}</pre>
+                        <h3 style={styles.outputHeading}>Output</h3>
+                        <pre style={styles.codeBox}>{result.output}</pre>
+                        <hr style={{ margin: '20px 0' }} /> {/* Added line at the end */}
+                    </div>
+                ))}
+            </div>}
         </div>
     )
 }

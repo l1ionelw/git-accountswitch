@@ -145,8 +145,8 @@ function runCommand(commandString) {
     console.log("[IPC] command output: " + output);
     console.log("----------");
   } catch (error) {
-    runStatus.status = "success";
-    runStatus.output = output;
+    runStatus.status = "error";
+    runStatus.output = error.message;
     console.error("[IPC] command error: " + error.message);
     console.log("----------");
   }
