@@ -6,7 +6,7 @@ export const APP_SSH_PREFIX = "accswitch_";
 
 // Create provider
 export const ConfigProvider = ({ children }) => {
-  const [config, setConfig] = useState({ currentUser: {}, sshFile: [] });
+  const [config, setConfig] = useState({ currentUser: {}, sshFile: [], repos: [] });
   useEffect(() => {
     fetchConfig().then(configResult => {
       setConfig(prevConfig => ({ ...prevConfig, sshFile: configResult }));
@@ -32,8 +32,23 @@ async function fetchConfig() {
   }
 }
 function fetchActiveAccount() {
-  let json = { sshProfile: localStorage.getItem("sshProfile"), username: localStorage.getItem("username"), email: localStorage.getItem("email") }
-  return json;
+  try {
+    const data = window.electronAPI.readDataFileSync('currentUser');
+    console.log(data);
+    return JSON.parse(data);
+  } catch (error) {
+    console.error("Failed to fetch active account:", error);
+  }
+}
+
+function fetchRepos() {
+  console.log("getting repos");
+  try {
+    const data = window.electronAPI.readDataFileSync('repos');
+    return JSON.parse(data);
+  } catch (error) {
+    console.error("Failed to fetch repos:", error);
+  }
 }
 function getAppOwnedConfigs(config) {
   var myConfigs = [];
@@ -49,5 +64,8 @@ function getAppOwnedConfigs(config) {
 {
 "currentUser": {sshProfile: "", username: "", email: ""}
 "sshFile": [],
+"repos": [
+{userEmail: "", "repos": []}
+]
 }
 */

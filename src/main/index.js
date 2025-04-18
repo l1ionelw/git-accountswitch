@@ -3,7 +3,7 @@ import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 import path from 'path'
-import { readFileSync } from 'fs'
+import { readFileSync, existsSync, mkdirSync, writeFileSync } from 'fs'
 import { homedir } from 'os'
 import SSHConfig from 'ssh-config'
 import { execSync } from 'child_process'
@@ -78,6 +78,29 @@ app.on('window-all-closed', () => {
 
 // In this file you can include the rest of your app's specific main process
 // code. You can also put them in separate files and require them here.
+ipcMain.on('read-data-file-sync', (event, key) => {
+  const filePath = path.join(process.env.APPDATA, 'GitAccountSwitch', `${key}.json`);
+  try {
+    const data = readFileSync(filePath, 'utf-8');
+    console.log("found " + filePath + " returning now")
+    console.log(data);
+    event.returnValue = data;
+  } catch (error) {
+    console.log(`Failed to read file for key "${key}"`, error);
+    event.returnValue = {};
+  }
+});
+
+ipcMain.on('write-data-file-sync', (event, key, jsonString) => {
+  const filePath = path.join(process.env.APPDATA, 'GitAccountSwitch', `${key}.json`);
+  try {
+    mkdirSync(path.dirname(filePath), { recursive: true });
+    writeFileSync(filePath, jsonString, 'utf-8');
+  } catch (error) {
+    console.error(`Failed to write file for key "${key}"`, error);
+  }
+});
+
 ipcMain.handle('read-ssh-config', async () => {
   try {
     console.log(homedir());
@@ -89,8 +112,9 @@ ipcMain.handle('read-ssh-config', async () => {
     console.log(error.message)
     return `Error reading file: ${error.message}`
   }
-})
-ipcMain.handle('create-new-sshtoken', (event, profileName, accountEmail) => {
+});
+
+ipcMain.handle('create-new-sshtoken', (event, profileName, accountEmail, accountUsername) => {
   console.log(profileName);
   console.log(accountEmail);
   let commandOutputs = [];
@@ -107,6 +131,8 @@ ipcMain.handle('create-new-sshtoken', (event, profileName, accountEmail) => {
 Host ${profileName}
     HostName github.com
     User git
+    Email ${accountEmail}
+    GithubUsername ${accountUsername}
     IdentityFile ~/.ssh/${profileName}
 `;
     sshConfigPath = path.join(homedir(), '.ssh', 'config');

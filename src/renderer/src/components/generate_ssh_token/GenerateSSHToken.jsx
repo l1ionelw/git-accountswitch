@@ -2,23 +2,23 @@ import { useEffect, useState } from "react";
 import { APP_SSH_PREFIX } from "../../ConfigContext";
 
 export default function GenerateSSHToken() {
-    const [profileName, setProfileName] = useState("");
+    const [friendlyName, setFriendlyName] = useState("");
     const [accountEmail, setAccountEmail] = useState("");
     const [commandsResult, setCommandsResult] = useState([]);
-    const [profileNameInvalid, setProfileNameInvalid] = useState(false);
     const [buttonEnabled, setButtonEnabled] = useState(true);
+    const [accountUsername, setAccountUsername] = useState("")
     function updateProfileName(newProfileName) {
-        setProfileName(newProfileName.replace(" ", "_").replace("-", "_"));
+        setFriendlyName(newProfileName.replace(" ", "_").replace("-", "_"));
     }
 
     function createSSHEntry() {
         setButtonEnabled(false);
-        const sshEntryName = APP_SSH_PREFIX + profileName.trim();
+        const sshEntryName = APP_SSH_PREFIX + friendlyName.trim();
         const sshEntryEmail = accountEmail.trim();
-        console.log(sshEntryName);
-        console.log(sshEntryEmail);
+        const sshAccountUsername = accountUsername.trim();
+        console.log(sshAccountUsername);
 
-        window.electronAPI.createNewSSHToken(sshEntryName, sshEntryEmail)
+        window.electronAPI.createNewSSHToken(sshEntryName, sshEntryEmail, sshAccountUsername)
             .then(response => {
                 console.log(response);
                 setCommandsResult(response);
@@ -38,7 +38,7 @@ export default function GenerateSSHToken() {
                         placeholder="work_account"
                         type="text"
                         id="profileName"
-                        value={profileName}
+                        value={friendlyName}
                         onChange={(e) => updateProfileName(e.target.value)}
                         required
                     />
@@ -55,13 +55,20 @@ export default function GenerateSSHToken() {
                         required
                     />
                 </div>
+                <div style={styles.inputGroup}>
+                    <label style={styles.label} htmlFor="accountUsername">Github account username:</label>
+                    <input
+                        style={styles.input}
+                        type="text"
+                        id="accountUsername"
+                        placeholder="supercooldev"
+                        value={accountUsername}
+                        onChange={(e) => setAccountUsername(e.target.value)}
+                        required
+                    />
+                </div>
                 <button style={buttonEnabled ? styles.button : styles.buttonDisabled} type="submit" disabled={!buttonEnabled}>Create SSH Token</button>
             </form>
-            {profileNameInvalid && (
-                <div style={styles.errorMessage}>
-                    <p>Profile name cannot have spaces or dashes; use underscores ( _ ) instead.</p>
-                </div>
-            )}
             {commandsResult.length > 0 && (
                 <div style={styles.successMessage}>
                     <h2>Your SSH token has been generated, please go to the <a href="https://github.com/settings/keys" target="_blank" rel="noopener noreferrer">GitHub developer settings</a> to add this SSH key</h2>

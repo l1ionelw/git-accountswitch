@@ -5,7 +5,6 @@ import { ConfigContext } from "../../ConfigContext";
 
 export default function Dashboard() {
     const { config, setConfig } = useContext(ConfigContext);
-    console.log(config);
 
     return (
         <div style={styles.container}>
