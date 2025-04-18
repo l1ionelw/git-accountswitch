@@ -87,7 +87,7 @@ ipcMain.on('read-data-file-sync', (event, key) => {
     event.returnValue = data;
   } catch (error) {
     console.log(`Failed to read file for key "${key}"`, error);
-    event.returnValue = {};
+    event.returnValue = "{}";
   }
 });
 

@@ -8,7 +8,7 @@ export default function Dashboard() {
 
     return (
         <div style={styles.container}>
-            <TopSection currentUser={config.currentUser} />
+            <TopSection />
             <Separator />
         </div>
     );
