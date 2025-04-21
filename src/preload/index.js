@@ -23,5 +23,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   readDataFileSync: (key) => ipcRenderer.sendSync('read-data-file-sync', key),
   writeDataFileSync: (key, jsonString) => ipcRenderer.send('write-data-file-sync', key, jsonString),
   readSSHConfig: () => ipcRenderer.invoke('read-ssh-config'),
-  createNewSSHToken: (profileName, accountEmail, accountUsername) => ipcRenderer.invoke('create-new-sshtoken', profileName, accountEmail, accountUsername)
+  createNewSSHToken: (profileName, accountEmail, accountUsername) => ipcRenderer.invoke('create-new-sshtoken', profileName, accountEmail, accountUsername),
+  cloneGitRepo: (repoUrl, repoName) => ipcRenderer.invoke("cloneGitRepo", repoUrl, repoName),
+  setRepoMainUser: (githubURL, githubUsername, githubEmail, repoName) => ipcRenderer.invoke('setRepoMainUser', githubURL, githubUsername, githubEmail, repoName)
 })

@@ -63,9 +63,9 @@ function getAppOwnedConfigs(config) {
 /*
 {
 "currentUser": {sshProfile: "", username: "", email: ""}
-"sshFile": [],
+"sshFile": [{}],
 "repos": [
-{userEmail: "", "repos": []}
+{userEmail: "", username: "", "repos": [{name: "", url: "", status: "finished | loading"}]}
 ]
 }
 */

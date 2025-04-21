@@ -14,12 +14,12 @@ export default function TopSection() {
 
     const handleSelectAccount = (sshProfile) => {
         // Update the current user with the selected SSH profile
-        const emailEntry = sshProfile.config.find(item => item.param === "Email");
-        const usernameEntry = sshProfile.config.find(item => item.param === "GithubUsername")
+        const emailEntry = sshProfile.config.find(item => item.content && item.content.startsWith("# Email"));
+        const usernameEntry = sshProfile.config.find(item => item.content && item.content.startsWith("# GithubUsername"))
         const currentUserEntry = {
             sshProfile: sshProfile.value,
-            email: emailEntry.value,
-            username: usernameEntry.value,
+            email: emailEntry.content.replace("# Email", "").trim(),
+            username: usernameEntry.content.replace("# GithubUsername", "").trim(),
         }
         setConfig({
             ...config,

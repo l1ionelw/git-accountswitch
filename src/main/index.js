@@ -178,3 +178,54 @@ function runCommand(commandString) {
   }
   return runStatus;
 }
+
+ipcMain.handle('cloneGitRepo', async (event, repoUrl, repoName) => {
+  console.log("cloning repo at: " + repoUrl);
+  const documentsPath = path.join(homedir(), 'Documents', repoName);
+  let cloneStatus = { status: null, output: null, command: `git clone ${repoUrl} ${documentsPath}` };
+
+  try {
+    // Create Documents directory if it doesn't exist
+    if (!existsSync(path.join(homedir(), 'Documents'))) {
+      mkdirSync(path.join(homedir(), 'Documents'), { recursive: true });
+    }
+
+    const output = execSync(`git clone ${repoUrl} ${documentsPath}`, { stdio: 'pipe' }).toString();
+    cloneStatus.status = "success";
+    cloneStatus.output = output;
+    console.log("[IPC] Git clone successful:", output);
+  } catch (error) {
+    cloneStatus.status = "error";
+    cloneStatus.output = error.message;
+    console.error("[IPC] Git clone failed:", error.message);
+  }
+
+  return cloneStatus;
+});
+
+ipcMain.handle('setRepoMainUser', async (event, githubURL, githubUsername, githubEmail, repoName) => {
+  console.log("github url: " + githubURL);
+  console.log("github username: " + githubUsername);
+  console.log("github email: " + githubEmail);
+  console.log("github repo name: " + repoName);
+  const repoPath = path.join(homedir(), 'Documents', repoName);
+  let setUserStatus = { status: null, output: null, command: `git config user.name "${githubUsername}" && git config user.email "${githubEmail}" && git remote set-url origin ${githubURL}` };
+
+  try {
+    // Navigate to the repo directory and run the commands
+    // git -C /path/to/repo config <key> <value>
+    const output = execSync(`git -C "${repoPath}" config user.name "${githubUsername}" && git -C "${repoPath}" config user.email "${githubEmail}" && git -C "${repoPath}" remote set-url origin ${githubURL}`, { stdio: 'pipe' }).toString();
+    setUserStatus.status = "success";
+    setUserStatus.output = output;
+    console.log("[IPC] User and remote URL set successfully:", output);
+  } catch (error) {
+    setUserStatus.status = "error";
+    setUserStatus.output = error.message;
+    console.error("[IPC] Setting user and remote URL failed:", error.message);
+  }
+
+  return setUserStatus;
+});
+
+
+
