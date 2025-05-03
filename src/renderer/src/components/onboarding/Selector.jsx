@@ -1,11 +1,14 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+
 
 export default function Selector() {
     const [activeView, setActiveView] = useState("left");
     const [showLoginWhyMessage, setShowLoginWhyMessage] = useState(false);
+    const navigate = useNavigate();
     function createSSHToken() {
         console.log("Create SSH Token clicked");
-        window.location.href = "/addaccountssh";
+        navigate("/addaccountssh");
     }
 
     return (

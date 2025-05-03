@@ -1,34 +1,26 @@
-# electron-app
+# Git Account Switch
+This Electron app allows you to manage your repositories through multiple GitHub accounts using SSH. With this application, you can easily switch between different accounts, view your repositories, and access commit details without the hassle of logging in and out of GitHub.
 
-An Electron application with React
+### Building the App
 
-## Recommended IDE Setup
+To build the Electron app, follow these steps:
 
-- [VSCode](https://code.visualstudio.com/) + [ESLint](https://marketplace.visualstudio.com/items?itemName=dbaeumer.vscode-eslint) + [Prettier](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode)
+1. **Install Dependencies**: Open your terminal and navigate to the project directory. Run the following command to install the necessary dependencies:
 
-## Project Setup
+   ```bash
+   npm install
+   ```
 
-### Install
+2. **Build for Windows**: After the dependencies are installed, you can build the application for Windows by running:
 
-```bash
-$ npm install
-```
-
-### Development
-
-```bash
-$ npm run dev
-```
-
-### Build
-
-```bash
-# For windows
-$ npm run build:win
-
-# For macOS
-$ npm run build:mac
-
-# For Linux
-$ npm run build:linux
-```
+   ```bash
+   npm run build:win
+   ```
+   ## TODO
+   - [ ] Detect missing repo (been deleted or moved)
+   - [ ] Error propagation
+   - [ ] Refactor code
+   - [ ] Improve UI
+   - [ ] Implement commit and push functionality
+   - [ ] Add diff viewer
+   - [ ] Enable login with GitHub functionality

@@ -1,12 +1,16 @@
 import { useContext, useState } from "react";
 import { ConfigContext } from "../../ConfigContext";
+import { produce } from "immer";
+import pathJoin from "../../pathJoin"
 
-export default function ReposList() {
+export default function ReposList({ setSelectedRepo }) {
     const { config, setConfig } = useContext(ConfigContext);
-    const repos = config.repos[config.currentAccount];
+    const repos = config.repos.find(repo =>
+        repo.userEmail === config.currentUser.email &&
+        repo.username === config.currentUser.username
+    )?.repos || [];
     const [repoUrl, setRepoUrl] = useState("");
     const [addRepoClicked, setAddRepoClicked] = useState(false);
-
     function handleAddClick() {
         setAddRepoClicked(!addRepoClicked);
     };
@@ -15,19 +19,48 @@ export default function ReposList() {
             console.error("Can't pull repo unless repo url is http/https!")
             return;
         }
-        console.log(config)
-        console.log("fetching new repo");
-        console.log(repoUrl.trim());
         const gitUsername = config.currentUser.username;
         const sshProfileName = config.currentUser.sshProfile;
         let githubRepoName = repoUrl.trim().split("/");
         githubRepoName = githubRepoName[githubRepoName.length - 1].replace(".git", "");
         const url = `git@${sshProfileName}:${gitUsername}/${githubRepoName}`
         console.log(url);
-        window.electronAPI.cloneGitRepo(url, githubRepoName).then((result) => {
+        window.electronAPI.cloneGitRepo(url, githubRepoName, config.settings.reposLocation).then(async (result) => {
+            console.log("finished git clone, adding state");
             console.log(result);
-            window.electronAPI.setRepoMainUser(url, gitUsername, config.currentUser.email, githubRepoName).then((result) => {
+            let updatedConfig = produce(config, draft => {
+                const repo = draft.repos.find(repo =>
+                    repo.userEmail === config.currentUser.email && repo.username === gitUsername
+                );
+                console.log("found repo to append to: ");
+                console.log(repo);
+                console.log("new repo path");
+                console.log(pathJoin([config.settings.reposLocation, githubRepoName]));
+                if (repo) {
+                    repo.repos.push({ name: githubRepoName, url: url, status: "loading", path: pathJoin([config.settings.reposLocation, githubRepoName]) });
+                } else {
+                    config.repos.push({ userEmail: config.currentUser.email, username: gitUsername, repos: [{ name: githubRepoName, url: url, status: "loading", path: pathJoin([config.settings.reposLocation, githubRepoName]) }] })
+                }
+            });
+
+            await window.electronAPI.setRepoMainUser(url, gitUsername, config.currentUser.email, githubRepoName, config.settings.reposLocation).then((result) => {
+                console.log("finished setting commit roles for server");
                 console.log(result)
+                updatedConfig = produce(updatedConfig, draft => {
+                    const repo = draft.repos.find(repo =>
+                        repo.userEmail === config.currentUser.email &&
+                        repo.username === gitUsername
+                    );
+                    repo?.repos.forEach(r => {
+                        if (r.name === githubRepoName) r.status = "finished";
+                    });
+                });
+                setConfig(updatedConfig);
+                window.electronAPI.writeDataFileSync('repositories', JSON.stringify(updatedConfig.repos)).then((result) => {
+                    console.log("Repositories saved successfully:", result);
+                }).catch((error) => {
+                    console.error("Failed to save repositories:", error);
+                });
             })
         })
     }
@@ -69,6 +102,7 @@ export default function ReposList() {
                             style={styles.repoCard}
                             onMouseEnter={handleMouseEnter}
                             onMouseLeave={handleMouseLeave}
+                            onClick={() => { setSelectedRepo(item.name) }}
                         >
                             <span style={styles.repoName}>{item.name}</span>
                         </div>
@@ -85,6 +119,19 @@ export default function ReposList() {
 }
 
 const styles = {
+    repoCard: {
+        padding: '16px 20px',
+        backgroundColor: 'white',
+        borderRadius: '8px',
+        border: '1px solid #e5e7eb',
+        boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)',
+        transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+        cursor: 'pointer',
+        overflow: 'hidden',  // Add this to clip overflow
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+    },
     input: {
         padding: '10px',
         fontSize: '16px',
@@ -119,6 +166,7 @@ const styles = {
     },
     addButton: {
         marginTop: "1rem",
+        marginBottom: "1rem",
         padding: '8px 16px',
         backgroundColor: '#3b82f6',
         color: 'white',

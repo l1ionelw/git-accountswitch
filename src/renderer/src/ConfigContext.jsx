@@ -12,6 +12,10 @@ export const ConfigProvider = ({ children }) => {
       setConfig(prevConfig => ({ ...prevConfig, sshFile: configResult }));
     });
     setConfig(prevConfig => ({ ...prevConfig, currentUser: fetchActiveAccount() }));
+    const repositories = fetchRepos()
+    setConfig(prevConfig => ({ ...prevConfig, repos: repositories }))
+    const settings = fetchSettings();
+    setConfig(prevConfig => ({ ...prevConfig, settings: settings }))
   }, []);
 
   return (
@@ -21,6 +25,7 @@ export const ConfigProvider = ({ children }) => {
   );
 
 };
+
 async function fetchConfig() {
   try {
     const response = await window.electronAPI.readSSHConfig();
@@ -44,10 +49,25 @@ function fetchActiveAccount() {
 function fetchRepos() {
   console.log("getting repos");
   try {
-    const data = window.electronAPI.readDataFileSync('repos');
+    const data = window.electronAPI.readDataFileSync('repositories');
     return JSON.parse(data);
   } catch (error) {
     console.error("Failed to fetch repos:", error);
+  }
+}
+function fetchSettings() {
+  console.log("getting settings");
+  try {
+    let data = window.electronAPI.readDataFileSync("settings");
+    data = JSON.parse(data);
+    if (!data.reposLocation || data.reposLocation === undefined || data.reposLocation === "") {
+      console.log("reposlocation doesnt exist");
+      console.log(data)
+      window.electronAPI.getDefaultReposLocation().then(response => data.reposLocation = response)
+    }
+    return data;
+  } catch (exception) {
+    console.error(exception);
   }
 }
 function getAppOwnedConfigs(config) {
@@ -65,7 +85,8 @@ function getAppOwnedConfigs(config) {
 "currentUser": {sshProfile: "", username: "", email: ""}
 "sshFile": [{}],
 "repos": [
-{userEmail: "", username: "", "repos": [{name: "", url: "", status: "finished | loading"}]}
-]
+{userEmail: "", username: "", "repos": [{name: "", url: "", status: "finished | loading", path: ""}]}
+],
+"settings": {reposLocation: ""}
 }
 */

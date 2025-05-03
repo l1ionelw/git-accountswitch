@@ -1,5 +1,7 @@
 import { useContext, useEffect, useState } from "react";
 import { ConfigContext } from "../../ConfigContext";
+import { useNavigate } from "react-router-dom";
+
 
 export default function TopSection() {
     const { config, setConfig } = useContext(ConfigContext);
@@ -7,6 +9,7 @@ export default function TopSection() {
     const [hasUserAccount, setHasUserAccount] = useState(true);
     const [showAccountSelector, setShowAccountSelector] = useState(false);
     const [hoveredAccount, setHoveredAccount] = useState(null);
+    const navigate = useNavigate();
 
     useEffect(() => {
         setHasUserAccount(!!(currentUser.email && currentUser.username && currentUser.sshProfile));
@@ -124,6 +127,12 @@ export default function TopSection() {
                                 )}
                             </div>
                         ))}
+                        <div style={styles.accountItem} onClick={() => navigate("/homepage")}>
+                            <span style={styles.accountItemName}>Add Account</span>
+                        </div>
+                        <div style={styles.accountItem} onClick={() => navigate("/settings")}>
+                            <span style={styles.accountItemName}>Settings</span>
+                        </div>
                     </div>
                 </div>
             )}

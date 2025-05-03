@@ -1,12 +1,14 @@
 import { useEffect, useState } from "react";
-import { APP_SSH_PREFIX } from "../../ConfigContext";
+import { APP_SSH_PREFIX, ConfigContext } from "../../ConfigContext";
+import { useNavigate } from "react-router-dom";
 
 export default function GenerateSSHToken() {
     const [friendlyName, setFriendlyName] = useState("");
     const [accountEmail, setAccountEmail] = useState("");
     const [commandsResult, setCommandsResult] = useState([]);
     const [buttonEnabled, setButtonEnabled] = useState(true);
-    const [accountUsername, setAccountUsername] = useState("")
+    const [accountUsername, setAccountUsername] = useState("");
+    const navigate = useNavigate();
     function updateProfileName(newProfileName) {
         setFriendlyName(newProfileName.replace(" ", "_").replace("-", "_"));
     }
@@ -74,7 +76,7 @@ export default function GenerateSSHToken() {
                     <h2>Your SSH token has been generated, please go to the <a href="https://github.com/settings/keys" target="_blank" rel="noopener noreferrer">GitHub developer settings</a> to add this SSH key</h2>
                     <h3>Command Output:</h3>
                     <pre style={styles.codeBox}>{commandsResult[commandsResult.length - 1].output}</pre>
-                    <button style={styles.button} onClick={() => window.location.href = '/'}>Next</button>
+                    <button style={styles.button} onClick={() => navigate("/")}>Next</button>
                 </div>
 
             )}

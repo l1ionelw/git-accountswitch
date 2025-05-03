@@ -1,4 +1,4 @@
-import { app, shell, BrowserWindow, ipcMain } from 'electron'
+import { app, shell, BrowserWindow, ipcMain, dialog } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
@@ -15,11 +15,12 @@ function createWindow() {
     width: 900,
     height: 670,
     show: false,
-    autoHideMenuBar: true,
+    autoHideMenuBar: false, // Changed to make the top bar visible
     ...(process.platform === 'linux' ? { icon } : {}),
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
-      sandbox: false
+      sandbox: false,
+      enableRemoteModule: true
     }
   })
 
@@ -31,6 +32,17 @@ function createWindow() {
     shell.openExternal(details.url)
     return { action: 'deny' }
   })
+
+  ipcMain.handle('dialog:openDirectory', async () => {
+    const { canceled, filePaths } = await dialog.showOpenDialog(mainWindow, {
+      properties: ['openDirectory']
+    })
+    if (canceled) {
+      return
+    } else {
+      return filePaths[0]
+    }
+  });
 
   // HMR for renderer base on electron-vite cli.
   // Load the remote URL for development or the local html file for production.
@@ -90,6 +102,11 @@ ipcMain.on('read-data-file-sync', (event, key) => {
     event.returnValue = "{}";
   }
 });
+ipcMain.on("getDefaultReposLocation", () => {
+  const documentsPath = path.join(homedir(), "Documents");
+  mkdirSync(documentsPath, { recursive: true });
+  return documentsPath;
+})
 
 ipcMain.on('write-data-file-sync', (event, key, jsonString) => {
   const filePath = path.join(process.env.APPDATA, 'GitAccountSwitch', `${key}.json`);
@@ -114,6 +131,7 @@ ipcMain.handle('read-ssh-config', async () => {
   }
 });
 
+
 ipcMain.handle('create-new-sshtoken', (event, profileName, accountEmail, accountUsername) => {
   console.log(profileName);
   console.log(accountEmail);
@@ -129,11 +147,11 @@ ipcMain.handle('create-new-sshtoken', (event, profileName, accountEmail, account
   try {
     sshConfigEntry = `
 Host ${profileName}
-    HostName github.com
-    User git
-    Email ${accountEmail}
-    GithubUsername ${accountUsername}
-    IdentityFile ~/.ssh/${profileName}
+  HostName github.com
+  User git
+  IdentityFile ~/.ssh/${profileName}
+  # GithubUsername ${accountUsername}
+  # Email ${accountEmail}
 `;
     sshConfigPath = path.join(homedir(), '.ssh', 'config');
     appendFileSync(sshConfigPath, sshConfigEntry, 'utf8');
@@ -179,9 +197,10 @@ function runCommand(commandString) {
   return runStatus;
 }
 
-ipcMain.handle('cloneGitRepo', async (event, repoUrl, repoName) => {
+ipcMain.handle('cloneGitRepo', async (event, repoUrl, repoName, repoParentFolder) => {
   console.log("cloning repo at: " + repoUrl);
-  const documentsPath = path.join(homedir(), 'Documents', repoName);
+  const documentsPath = path.join(repoParentFolder, repoName);
+  console.log("cloning to folder: " + documentsPath);
   let cloneStatus = { status: null, output: null, command: `git clone ${repoUrl} ${documentsPath}` };
 
   try {
@@ -203,12 +222,13 @@ ipcMain.handle('cloneGitRepo', async (event, repoUrl, repoName) => {
   return cloneStatus;
 });
 
-ipcMain.handle('setRepoMainUser', async (event, githubURL, githubUsername, githubEmail, repoName) => {
+ipcMain.handle('setRepoMainUser', async (event, githubURL, githubUsername, githubEmail, repoName, repoParentFolder) => {
   console.log("github url: " + githubURL);
   console.log("github username: " + githubUsername);
   console.log("github email: " + githubEmail);
   console.log("github repo name: " + repoName);
-  const repoPath = path.join(homedir(), 'Documents', repoName);
+  const repoPath = path.join(repoParentFolder, repoName);
+  console.log("changing commit settings at repo folder: " + repoPath)
   let setUserStatus = { status: null, output: null, command: `git config user.name "${githubUsername}" && git config user.email "${githubEmail}" && git remote set-url origin ${githubURL}` };
 
   try {
@@ -226,6 +246,19 @@ ipcMain.handle('setRepoMainUser', async (event, githubURL, githubUsername, githu
 
   return setUserStatus;
 });
-
-
+ipcMain.handle("get-repo-commit-details", async (event, repoPath) => {
+  console.log("getting details for this repo:")
+  console.log(repoPath);
+  let outputResults = { name: "", email: "" }
+  const getEmailCommand = `git -C ${repoPath} config user.email`
+  const getNameCommand = `git -C ${repoPath} config user.name`
+  outputResults.name = runCommand(getNameCommand).output;
+  outputResults.email = runCommand(getEmailCommand).output;
+  return outputResults
+});
+ipcMain.on('join-path', (event, ...paths) => {
+  console.log("paths to join");
+  console.log(...paths);
+  return path.join(...paths);
+});
 
